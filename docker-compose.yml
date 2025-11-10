@@ -1,0 +1,26 @@
+version: '3.8'
+services:
+  # Aplicación Next.js
+  app:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: empleabilidad_app
+    restart: always
+    ports:
+      - "3000:3000"
+    environment:
+      # Variables de base de datos (AWS RDS)
+      DATABASE_URL: mysql://admin:Proyecto2025@proyecto-formulario.ckiahkstouyr.us-east-1.rds.amazonaws.com:3306/formulario_empleabilidad
+      
+      # Variables de autenticación (cambiar en producción)
+      AUTH_SECRET: tu-clave-secreta-super-segura-cambiar-en-produccion
+      
+      # Variable de entorno para producción
+      NODE_ENV: production
+    volumes:
+      # Opcional: para logs persistentes
+      - app_logs:/app/logs
+
+volumes:
+  app_logs:

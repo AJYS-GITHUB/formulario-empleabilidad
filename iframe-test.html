@@ -1,0 +1,81 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Ejemplo de Iframe - Formulario UCV</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            margin: 20px;
+            background-color: #f5f5f5;
+        }
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+        }
+        h1 {
+            color: #333;
+            text-align: center;
+        }
+        .iframe-container {
+            background: white;
+            border-radius: 8px;
+            padding: 20px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+        }
+        iframe {
+            width: 100%;
+            height: 1000px;
+            border: none;
+            border-radius: 8px;
+            min-height: 1000px;
+        }
+        .info {
+            background: #e3f2fd;
+            padding: 15px;
+            border-radius: 8px;
+            margin-bottom: 20px;
+            border-left: 4px solid #2196f3;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>Servicio de Empleabilidad - Universidad Central de Venezuela</h1>
+        
+        <div class="info">
+            <h3>📝 Formulario de Reserva de Citas</h3>
+            <p>Reserve su cita para recibir orientación personalizada en búsqueda de empleo, preparación de entrevistas y desarrollo de habilidades profesionales.</p>
+            <p>Utilice el formulario a continuación para reservar su cita con nuestros especialistas en empleabilidad.</p>
+            <ul>
+                <li>Seleccione su campus de preferencia</li>
+                <li>Indique su estatus y nivel académico</li>
+                <li>Elija el tema de asesoría de su interés</li>
+                <li>Seleccione el horario disponible con el expositor especializado</li>
+                <li>Complete sus datos personales</li>
+                <li>Resuelva el captcha para confirmar su reserva</li>
+            </ul>
+        </div>
+        
+        <div class="iframe-container">
+            <iframe 
+                src="http://localhost:3000/embed" 
+                title="Formulario de Reserva de Empleabilidad UCV"
+                frameborder="0"
+                scrolling="auto">
+            </iframe>
+        </div>
+        
+        <div class="info">
+            <h3>📞 Información de Contacto</h3>
+            <p>Si tiene problemas para realizar su reserva, puede contactarnos:</p>
+            <ul>
+                <li><strong>Email:</strong> empleabilidad@ucv.ve</li>
+                <li><strong>Teléfono:</strong> +58 212 605-1000</li>
+                <li><strong>Horario:</strong> Lunes a Viernes 8:00 AM - 4:00 PM</li>
+            </ul>
+        </div>
+    </div>
+</body>
+</html>

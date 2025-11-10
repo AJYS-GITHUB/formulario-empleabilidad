@@ -1,0 +1,85 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "mysql"
+  url      = env("DATABASE_URL")
+}
+
+model Expositor {
+  id          Int      @id @default(autoincrement())
+  name        String   @db.VarChar(255)
+  lastName    String   @db.VarChar(255)
+  email       String   @unique @db.VarChar(255)
+  phone       String?  @db.VarChar(20)
+  speciality  String   @db.VarChar(255) // Área de especialidad del expositor
+  bio         String?  @db.Text // Biografía o descripción
+  isActive    Boolean  @default(true)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+  
+  timeSlots   TimeSlot[]
+
+  @@index([email])
+  @@index([speciality])
+}
+
+model TimeSlot {
+  id            String     @id @default(cuid())
+  date          String     @db.VarChar(10) // Format: YYYY-MM-DD
+  startTime     String     @db.VarChar(5)  // Format: HH:MM
+  endTime       String     @db.VarChar(5)  // Format: HH:MM
+  maxAttendees  Int        @default(10)
+  title         String?    @db.VarChar(255) // Título de la sesión
+  description   String?    @db.Text // Descripción de la sesión
+  isActive      Boolean    @default(true)
+  expositorId   Int        // Referencia al expositor
+  createdAt     DateTime   @default(now())
+  updatedAt     DateTime   @updatedAt
+  
+  expositor     Expositor  @relation(fields: [expositorId], references: [id])
+  bookings      Booking[]
+
+  @@index([date, startTime])
+  @@index([expositorId])
+  @@index([isActive])
+}
+
+model Booking {
+  id             String    @id @default(cuid())
+  timeSlot       TimeSlot  @relation(fields: [timeSlotId], references: [id])
+  timeSlotId     String
+  firstName      String    @db.VarChar(100)
+  lastName       String    @db.VarChar(100)
+  email          String    @db.VarChar(255)
+  phone          String?   @db.VarChar(20)
+  document       String    @db.VarChar(20)
+  campus         String    @db.VarChar(100)
+  academicStatus String?   @db.VarChar(100)
+  academicLevel  String?   @db.VarChar(100)
+  advisoryTopic  String?   @db.VarChar(200)
+  advisoryType   String?   @db.VarChar(100)
+  serviceOption  String?   @db.VarChar(100)
+  occupation     String?   @db.VarChar(200)
+  comments       String?   @db.Text
+  status         String    @default("confirmed") @db.VarChar(20)
+  createdAt      DateTime  @default(now())
+  updatedAt      DateTime  @updatedAt
+
+  @@map("bookings")
+}
+
+model Admin {
+  id        String   @id @default(cuid())
+  username  String   @unique @db.VarChar(50)
+  password  String   @db.VarChar(255)
+  name      String   @db.VarChar(255)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([username])
+}

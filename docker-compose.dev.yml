@@ -1,0 +1,21 @@
+# Docker Compose para desarrollo local
+version: '3.8'
+services:
+  # Solo base de datos para desarrollo
+  mysql-dev:
+    image: mysql:8.0
+    container_name: empleabilidad_mysql_dev
+    restart: always
+    environment:
+      MYSQL_ROOT_PASSWORD: root_password
+      MYSQL_DATABASE: empleabilidad_ucv
+      MYSQL_USER: empleabilidad_user
+      MYSQL_PASSWORD: empleabilidad_2025
+    ports:
+      - "3307:3306"  # Puerto diferente para no conflicto
+    volumes:
+      - mysql_dev_data:/var/lib/mysql
+    command: --default-authentication-plugin=mysql_native_password
+
+volumes:
+  mysql_dev_data:
