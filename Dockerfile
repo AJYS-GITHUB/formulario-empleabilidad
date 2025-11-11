@@ -21,8 +21,8 @@ RUN rm -rf node_modules && npm ci --only=production
 RUN addgroup --system --gid 1001 nodejs
 RUN adduser --system --uid 1001 nextjs
 
-# Configurar archivos y permisos
-RUN mkdir .next
+# Configurar archivos y permisos (mkdir solo si no existe)
+RUN mkdir -p .next
 RUN chown nextjs:nodejs .next
 COPY --chown=nextjs:nodejs start.sh ./start.sh
 RUN chmod +x start.sh
