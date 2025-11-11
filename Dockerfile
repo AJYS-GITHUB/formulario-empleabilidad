@@ -6,7 +6,8 @@ WORKDIR /app
 
 # Copiar archivos de dependencias
 COPY package.json package-lock.json* ./
-RUN npm ci --only=production
+# Instalar todas las dependencias (incluyendo dev dependencies para build)
+RUN npm ci
 
 # Stage 2: Builder
 FROM node:20-alpine AS builder
@@ -17,7 +18,13 @@ COPY . .
 # Solo construir la aplicación, sin generar Prisma aún
 RUN npm run build
 
-# Stage 3: Runner
+# Stage 3: Production dependencies
+FROM node:20-alpine AS prod-deps
+WORKDIR /app
+COPY package.json package-lock.json* ./
+RUN npm ci --only=production
+
+# Stage 4: Runner
 FROM node:20-alpine AS runner
 WORKDIR /app
 
@@ -33,7 +40,7 @@ COPY --from=builder /app/public ./public
 COPY --from=builder /app/.next/standalone ./
 COPY --from=builder /app/.next/static ./.next/static
 COPY --from=builder /app/prisma ./prisma
-COPY --from=deps /app/node_modules ./node_modules
+COPY --from=prod-deps /app/node_modules ./node_modules
 
 # Copiar script de inicio
 COPY start.sh ./start.sh
