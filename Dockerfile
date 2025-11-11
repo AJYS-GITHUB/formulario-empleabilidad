@@ -14,10 +14,7 @@ WORKDIR /app
 COPY --from=deps /app/node_modules ./node_modules
 COPY . .
 
-# Generar el cliente Prisma
-RUN npx prisma generate
-
-# Construir la aplicación
+# Solo construir la aplicación, sin generar Prisma aún
 RUN npm run build
 
 # Stage 3: Runner
@@ -36,7 +33,6 @@ COPY --from=builder /app/public ./public
 COPY --from=builder /app/.next/standalone ./
 COPY --from=builder /app/.next/static ./.next/static
 COPY --from=builder /app/prisma ./prisma
-COPY --from=builder /app/node_modules/.prisma ./node_modules/.prisma
 COPY --from=deps /app/node_modules ./node_modules
 
 # Copiar script de inicio

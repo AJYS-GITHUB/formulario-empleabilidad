@@ -13,8 +13,8 @@ services:
       # Variables de base de datos (AWS RDS)
       DATABASE_URL: mysql://admin:Proyecto2025@proyecto-formulario.ckiahkstouyr.us-east-1.rds.amazonaws.com:3306/formulario_empleabilidad
       
-      # Variables de autenticación (cambiar en producción)
-      AUTH_SECRET: tu-clave-secreta-super-segura-cambiar-en-produccion
+      # Variables de autenticación
+      AUTH_SECRET: 3lGSJ5ZQx4QQSyHwRJxZhN8T6xbUZO0QGrPjSGnBEE8=
       
       # Variable de entorno para producción
       NODE_ENV: production
