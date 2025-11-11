@@ -1,63 +1,39 @@
-# Dockerfile multi-stage para optimizar el tamaño de la imagen
-# Stage 1: Dependencies
-FROM node:20-alpine AS deps
+# Dockerfile optimizado para Prisma
+FROM node:20-alpine AS base
 RUN apk add --no-cache libc6-compat
 WORKDIR /app
 
-# Copiar archivos de dependencias
+# Instalar dependencias
 COPY package.json package-lock.json* ./
-# Instalar todas las dependencias (incluyendo dev dependencies para build)
 RUN npm ci
 
-# Stage 2: Builder
-FROM node:20-alpine AS builder
-WORKDIR /app
-COPY --from=deps /app/node_modules ./node_modules
+# Copiar código fuente
 COPY . .
 
-# Generar cliente Prisma con schema por defecto
-RUN npx prisma generate
+# Generar Prisma con URL dummy y construir
+ENV DATABASE_URL="mysql://dummy:dummy@dummy:3306/dummy"
+RUN npx prisma generate && npm run build
 
-# Construir la aplicación
-RUN npm run build
+# Instalar solo dependencias de producción en directorio limpio
+RUN rm -rf node_modules && npm ci --only=production
 
-# Stage 3: Production dependencies
-FROM node:20-alpine AS prod-deps
-WORKDIR /app
-COPY package.json package-lock.json* ./
-RUN npm ci --only=production
-
-# Stage 4: Runner
-FROM node:20-alpine AS runner
-WORKDIR /app
-
-ENV NODE_ENV production
-ENV NEXT_TELEMETRY_DISABLED 1
-
-# Crear usuario no-root para seguridad
+# Configurar usuario no-root
 RUN addgroup --system --gid 1001 nodejs
 RUN adduser --system --uid 1001 nextjs
 
-# Copiar archivos necesarios
-COPY --from=builder /app/public ./public
-COPY --from=builder /app/.next/standalone ./
-COPY --from=builder /app/.next/static ./.next/static
-COPY --from=builder /app/prisma ./prisma
-COPY --from=builder /app/node_modules/.prisma ./node_modules/.prisma
-COPY --from=prod-deps /app/node_modules ./node_modules
+# Configurar archivos y permisos
+RUN mkdir .next
+RUN chown nextjs:nodejs .next
+COPY --chown=nextjs:nodejs start.sh ./start.sh
+RUN chmod +x start.sh
 
-# Copiar script de inicio
-COPY start.sh ./start.sh
-RUN chmod +x ./start.sh
+# Configurar variables de entorno
+ENV NODE_ENV=production
+ENV NEXT_TELEMETRY_DISABLED=1
+ENV PORT=3000
+ENV HOSTNAME="0.0.0.0"
 
-# Configurar permisos
-RUN chown -R nextjs:nodejs /app
 USER nextjs
-
 EXPOSE 3000
 
-ENV PORT 3000
-ENV HOSTNAME "0.0.0.0"
-
-# Comando para ejecutar la aplicación con script de inicio
 CMD ["./start.sh"]
