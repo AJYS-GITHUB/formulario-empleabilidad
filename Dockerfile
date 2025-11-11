@@ -15,7 +15,10 @@ WORKDIR /app
 COPY --from=deps /app/node_modules ./node_modules
 COPY . .
 
-# Solo construir la aplicación, sin generar Prisma aún
+# Generar cliente Prisma con schema por defecto
+RUN npx prisma generate
+
+# Construir la aplicación
 RUN npm run build
 
 # Stage 3: Production dependencies
@@ -40,6 +43,7 @@ COPY --from=builder /app/public ./public
 COPY --from=builder /app/.next/standalone ./
 COPY --from=builder /app/.next/static ./.next/static
 COPY --from=builder /app/prisma ./prisma
+COPY --from=builder /app/node_modules/.prisma ./node_modules/.prisma
 COPY --from=prod-deps /app/node_modules ./node_modules
 
 # Copiar script de inicio

@@ -2,8 +2,8 @@
 
 echo "🚀 Iniciando aplicación..."
 
-# Generar el cliente Prisma con las variables de entorno
-echo "🔧 Generando cliente Prisma..."
+# Regenerar el cliente Prisma con las variables de entorno del runtime
+echo "🔧 Regenerando cliente Prisma con configuración de producción..."
 npx prisma generate
 
 # Ejecutar migración de base de datos con AWS RDS
