@@ -5,7 +5,7 @@ import { z } from 'zod';
 const expositorSchema = z.object({
   name: z.string().min(2, 'El nombre debe tener al menos 2 caracteres'),
   lastName: z.string().min(2, 'El apellido debe tener al menos 2 caracteres'),
-  email: z.string().email('Debe ser un email válido'),
+  email: z.string().email('Debe ser un email válido').optional(),
   phone: z.string().optional(),
   speciality: z.string().min(2, 'La especialidad es requerida'),
   bio: z.string().optional(),
@@ -33,19 +33,19 @@ export async function POST(request: NextRequest) {
     const body = await request.json();
     const validatedData = expositorSchema.parse(body);
 
-    // Check if email already exists
-    const existingExpositor = await prisma.expositor.findUnique({
-      where: { email: validatedData.email }
-    });
-
-    if (existingExpositor) {
-      return NextResponse.json({ 
-        error: 'Ya existe un expositor con este email' 
-      }, { status: 400 });
-    }
+    // Preparar datos para crear, manejando campos opcionales
+    const createData = {
+      name: validatedData.name,
+      lastName: validatedData.lastName,
+      email: validatedData.email || null,
+      phone: validatedData.phone || null,
+      speciality: validatedData.speciality,
+      bio: validatedData.bio || null,
+      isActive: validatedData.isActive ?? true,
+    };
 
     const expositor = await prisma.expositor.create({
-      data: validatedData,
+      data: createData,
     });
 
     return NextResponse.json(expositor);

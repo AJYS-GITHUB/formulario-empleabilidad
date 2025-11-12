@@ -12,9 +12,33 @@ const timeSlotSchema = z.object({
   expositorId: z.number(),
 });
 
-export async function GET() {
+export async function GET(request: NextRequest) {
   try {
+    const { searchParams } = new URL(request.url);
+    const page = parseInt(searchParams.get('page') || '1');
+    const limit = parseInt(searchParams.get('limit') || '10');
+    const showPast = searchParams.get('showPast') === 'true';
+    
+    // Calcular offset para paginación
+    const offset = (page - 1) * limit;
+    
+    // Obtener fecha actual en formato YYYY-MM-DD
+    const today = new Date().toISOString().split('T')[0];
+    
+    // Construir filtro de fecha
+    const dateFilter = showPast ? {} : {
+      date: {
+        gte: today
+      }
+    };
+
+    // Obtener total de registros para paginación
+    const totalCount = await prisma.timeSlot.count({
+      where: dateFilter
+    });
+
     const timeSlots = await prisma.timeSlot.findMany({
+      where: dateFilter,
       include: {
         expositor: {
           select: {
@@ -37,10 +61,23 @@ export async function GET() {
       orderBy: [
         { date: 'asc' },
         { startTime: 'asc' }
-      ]
+      ],
+      skip: offset,
+      take: limit
     });
 
-    return NextResponse.json(timeSlots);
+    const totalPages = Math.ceil(totalCount / limit);
+
+    return NextResponse.json({
+      timeSlots,
+      pagination: {
+        currentPage: page,
+        totalPages,
+        totalCount,
+        hasNextPage: page < totalPages,
+        hasPreviousPage: page > 1
+      }
+    });
   } catch (error) {
     console.error('Error fetching time slots:', error);
     return NextResponse.json({ error: 'Internal server error' }, { status: 500 });
@@ -70,38 +107,7 @@ export async function POST(request: NextRequest) {
       }, { status: 400 });
     }
 
-    // Check if there's already a time slot for the same date and time
-    const existingSlot = await prisma.timeSlot.findFirst({
-      where: {
-        date: validatedData.date,
-        OR: [
-          {
-            AND: [
-              { startTime: { lte: validatedData.startTime } },
-              { endTime: { gt: validatedData.startTime } }
-            ]
-          },
-          {
-            AND: [
-              { startTime: { lt: validatedData.endTime } },
-              { endTime: { gte: validatedData.endTime } }
-            ]
-          },
-          {
-            AND: [
-              { startTime: { gte: validatedData.startTime } },
-              { endTime: { lte: validatedData.endTime } }
-            ]
-          }
-        ]
-      }
-    });
-
-    if (existingSlot) {
-      return NextResponse.json({ 
-        error: 'Ya existe un horario que se solapa con el horario especificado' 
-      }, { status: 400 });
-    }
+    // Permitir múltiples charlas simultáneas (validación de solapamiento eliminada)
 
     const timeSlot = await prisma.timeSlot.create({
       data: validatedData,

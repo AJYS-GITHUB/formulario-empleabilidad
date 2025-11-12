@@ -11,7 +11,7 @@ model Expositor {
   id         Int        @id @default(autoincrement())
   name       String     @db.VarChar(255)
   lastName   String     @db.VarChar(255)
-  email      String     @unique @db.VarChar(255)
+  email      String?    @db.VarChar(255)
   phone      String?    @db.VarChar(20)
   speciality String     @db.VarChar(255)
   bio        String?    @db.Text
@@ -20,7 +20,6 @@ model Expositor {
   updatedAt  DateTime   @updatedAt
   timeSlots  TimeSlot[]
 
-  @@index([email])
   @@index([speciality])
 }
 

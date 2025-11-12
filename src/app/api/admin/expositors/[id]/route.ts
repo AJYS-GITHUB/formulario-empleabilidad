@@ -27,21 +27,7 @@ export async function PATCH(
     const body = await request.json();
     const validatedData = updateSchema.parse(body);
 
-    // Check if email already exists (if changing email)
-    if (validatedData.email) {
-      const existingExpositor = await prisma.expositor.findFirst({
-        where: { 
-          email: validatedData.email,
-          NOT: { id: expositorId }
-        }
-      });
-
-      if (existingExpositor) {
-        return NextResponse.json({ 
-          error: 'Ya existe un expositor con este email' 
-        }, { status: 400 });
-      }
-    }
+    // Email ya no tiene restricción unique - permitir duplicados
 
     const expositor = await prisma.expositor.update({
       where: { id: expositorId },

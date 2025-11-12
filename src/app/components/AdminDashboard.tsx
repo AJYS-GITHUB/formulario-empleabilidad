@@ -26,7 +26,7 @@ interface Expositor {
   id: number;
   name: string;
   lastName: string;
-  email: string;
+  email?: string;
   phone?: string;
   speciality: string;
   bio?: string;
@@ -62,6 +62,13 @@ export default function AdminDashboard() {
   const [expositors, setExpositors] = useState<Expositor[]>([]);
   const [bookings, setBookings] = useState<Booking[]>([]);
   const [loading, setLoading] = useState(true);
+  
+  // Paginación para horarios
+  const [currentPage, setCurrentPage] = useState(1);
+  const [totalPages, setTotalPages] = useState(1);
+  const [totalCount, setTotalCount] = useState(0);
+  const [showPast, setShowPast] = useState(false);
+  const itemsPerPage = 10;
 
   // New time slot form
   const [newSlot, setNewSlot] = useState({
@@ -95,13 +102,22 @@ export default function AdminDashboard() {
     }
   }, [activeTab]);
 
-  const fetchTimeSlots = async () => {
+  const fetchTimeSlots = async (page: number = currentPage) => {
     setLoading(true);
     try {
-      const response = await fetch('/api/admin/timeslots');
+      const params = new URLSearchParams({
+        page: page.toString(),
+        limit: itemsPerPage.toString(),
+        showPast: showPast.toString()
+      });
+      
+      const response = await fetch(`/api/admin/timeslots?${params}`);
       if (response.ok) {
         const data = await response.json();
-        setTimeSlots(data);
+        setTimeSlots(data.timeSlots);
+        setCurrentPage(data.pagination.currentPage);
+        setTotalPages(data.pagination.totalPages);
+        setTotalCount(data.pagination.totalCount);
       }
     } catch (error) {
       console.error('Error fetching time slots:', error);
@@ -236,6 +252,18 @@ export default function AdminDashboard() {
   const formatDate = (dateString: string) => {
     const date = parse(dateString, 'yyyy-MM-dd', new Date());
     return format(date, "EEEE d 'de' MMMM, yyyy", { locale: es });
+  };
+
+  // Funciones de paginación
+  const handlePageChange = (newPage: number) => {
+    setCurrentPage(newPage);
+    fetchTimeSlots(newPage);
+  };
+
+  const handleShowPastChange = (show: boolean) => {
+    setShowPast(show);
+    setCurrentPage(1);
+    setTimeout(() => fetchTimeSlots(1), 0);
   };
 
   const formatDateTime = (dateString: string) => {
@@ -401,7 +429,23 @@ export default function AdminDashboard() {
           {/* Time Slots List */}
           <div className="bg-white rounded-lg shadow">
             <div className="p-6 border-b border-gray-200">
-              <h2 className="text-xl font-semibold">Horarios Existentes</h2>
+              <div className="flex justify-between items-center">
+                <h2 className="text-xl font-semibold">Horarios Existentes</h2>
+                <div className="flex items-center space-x-4">
+                  <label className="flex items-center">
+                    <input
+                      type="checkbox"
+                      checked={showPast}
+                      onChange={(e) => handleShowPastChange(e.target.checked)}
+                      className="rounded border-gray-300 text-blue-600 focus:ring-blue-500"
+                    />
+                    <span className="ml-2 text-sm text-gray-700">Mostrar horarios pasados</span>
+                  </label>
+                  <span className="text-sm text-gray-500">
+                    Total: {totalCount} horarios
+                  </span>
+                </div>
+              </div>
             </div>
             <div className="overflow-x-auto">
               {loading ? (
@@ -489,6 +533,59 @@ export default function AdminDashboard() {
                 </table>
               )}
             </div>
+            
+            {/* Controles de Paginación */}
+            {!loading && totalPages > 1 && (
+              <div className="px-6 py-4 border-t border-gray-200 flex items-center justify-between">
+                <div className="flex items-center text-sm text-gray-700">
+                  <span>
+                    Página {currentPage} de {totalPages} ({totalCount} total)
+                  </span>
+                </div>
+                <div className="flex items-center space-x-2">
+                  <button
+                    onClick={() => handlePageChange(currentPage - 1)}
+                    disabled={currentPage <= 1}
+                    className="px-3 py-1 text-sm border border-gray-300 rounded-md disabled:opacity-50 disabled:cursor-not-allowed hover:bg-gray-50"
+                  >
+                    Anterior
+                  </button>
+                  
+                  {/* Números de página */}
+                  {Array.from({ length: totalPages }, (_, i) => i + 1)
+                    .filter(page => 
+                      page === 1 || 
+                      page === totalPages || 
+                      Math.abs(page - currentPage) <= 2
+                    )
+                    .map((page, index, array) => (
+                      <div key={page} className="flex items-center">
+                        {index > 0 && array[index - 1] !== page - 1 && (
+                          <span className="px-2 text-gray-400">...</span>
+                        )}
+                        <button
+                          onClick={() => handlePageChange(page)}
+                          className={`px-3 py-1 text-sm border rounded-md ${
+                            page === currentPage
+                              ? 'bg-blue-500 text-white border-blue-500'
+                              : 'border-gray-300 hover:bg-gray-50'
+                          }`}
+                        >
+                          {page}
+                        </button>
+                      </div>
+                    ))}
+                  
+                  <button
+                    onClick={() => handlePageChange(currentPage + 1)}
+                    disabled={currentPage >= totalPages}
+                    className="px-3 py-1 text-sm border border-gray-300 rounded-md disabled:opacity-50 disabled:cursor-not-allowed hover:bg-gray-50"
+                  >
+                    Siguiente
+                  </button>
+                </div>
+              </div>
+            )}
           </div>
         </div>
       )}
@@ -530,13 +627,12 @@ export default function AdminDashboard() {
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <div>
                   <label className="block text-sm font-medium text-gray-700 mb-1">
-                    Email *
+                    Email
                   </label>
                   <input
                     type="email"
                     value={newExpositor.email}
                     onChange={(e) => setNewExpositor({ ...newExpositor, email: e.target.value })}
-                    required
                     className="w-full p-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
                   />
                 </div>
@@ -635,7 +731,7 @@ export default function AdminDashboard() {
                           )}
                         </td>
                         <td className="px-6 py-4 whitespace-nowrap">
-                          <div className="text-sm text-gray-900">{expositor.email}</div>
+                          <div className="text-sm text-gray-900">{expositor.email || 'No especificado'}</div>
                           {expositor.phone && (
                             <div className="text-sm text-gray-500">{expositor.phone}</div>
                           )}
